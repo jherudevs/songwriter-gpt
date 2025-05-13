@@ -1,49 +1,52 @@
-# app.py
-
-from flask import Flask, render_template, request
-import random
+from flask import Flask, request, render_template, send_from_directory
 from pathlib import Path
-from songwriter_ai.utilities.audio.align import auto_align_vibe_to_drums
+import os
+
+# --- Backend pipeline imports ---
+from songwriter_ai.utilities.prompting.deduction_engine import deduce_vibe_from_prompt
+from songwriter_ai.utilities.audio.stacker import run_stacker
+from songwriter_ai.utilities.prompting.naming_engine import name_my_stack
 from songwriter_ai.utilities.prompting.prompt_engine import generate_lyric_line
 
+# --- Pulls API key ---
+from dotenv import load_dotenv
+
 app = Flask(__name__)
-
-VIBE_DIR = Path("loops")
-DRUM_DIR = VIBE_DIR / "drums"
-OUTPUT_DIR = Path("outputs")
-OUTPUT_DIR.mkdir(exist_ok=True)
-
-def get_loop(vibe):
-    vibe_path = VIBE_DIR / vibe
-    loops = list(vibe_path.glob("*.wav"))
-    return random.choice(loops) if loops else None
-
-def get_drum():
-    loops = list(DRUM_DIR.glob("*.wav"))
-    return random.choice(loops) if loops else None
+STACKS_DIR = Path("outputs/stacks")
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    generated_lyric = None
     output_file = None
+    lyric = None
 
     if request.method == "POST":
-        vibe = request.form["vibe"]
-        topic = request.form["topic"]
+        user_prompt = request.form["feeling"]
 
-        vibe_loop = get_loop(vibe)
-        drum_loop = get_drum()
+        # Step 1: Deduce vibe
+        vibe = deduce_vibe_from_prompt(user_prompt)
 
-        if not vibe_loop or not drum_loop:
-            return render_template("index.html", error="Missing loops.")
+        # Step 2: Generate beat stack
+        run_stacker(vibe_name=vibe)
 
-        output_path = OUTPUT_DIR / f"{vibe}_{topic.replace(' ', '_')}_stack.wav"
-        auto_align_vibe_to_drums(str(vibe_loop), str(drum_loop), str(output_path))
-        generated_lyric = generate_lyric_line(vibe, topic)
-        output_file = f"/outputs/{output_path.name}"
+        # Step 3: Rename most recent stack
+        stack_name = name_my_stack(user_prompt, vibe)
+        new_filename = f"{stack_name}.wav"
 
-    vibes = [d.name for d in VIBE_DIR.iterdir() if d.is_dir() and d.name != "drums"]
-    return render_template("index.html", vibes=vibes, lyric=generated_lyric, audio_path=output_file)
+        files = sorted(STACKS_DIR.glob("*.wav"), key=os.path.getmtime, reverse=True)
+        if files:
+            latest = files[0]
+            renamed_path = STACKS_DIR / new_filename
+            latest.rename(renamed_path)
+            output_file = new_filename
+
+        # Step 4: Generate lyric
+        lyric = generate_lyric_line(vibe, user_prompt)
+
+    return render_template("index.html", output_file=output_file, lyric=lyric)
+
+@app.route("/outputs/stacks/<filename>")
+def serve_output(filename):
+    return send_from_directory(STACKS_DIR, filename)
 
 if __name__ == "__main__":
     app.run(debug=True)
