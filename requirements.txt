@@ -1,0 +1,7 @@
+openai>=1.3.7       # for GPT-based vibe + naming
+librosa>=0.10.1     # for BPM detection & audio loading
+pydub>=0.25.1       # for audio overlay
+scipy>=1.10.1       # for reading WAVs (wavfile)
+numpy>=1.24.3       # required by librosa
+soundfile>=0.12.1   # backend for librosa
+audioread>=3.0.0    # fallback for audio loading

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <title>AI Songwriter</title>
+</head>
+<body>
+  <h1>🎶 Songwriter Assistant</h1>
+  <form method="post">
+    <label for="vibe">Choose a vibe:</label>
+    <select name="vibe">
+      {% for vibe in vibes %}
+      <option value="{{ vibe }}">{{ vibe }}</option>
+      {% endfor %}
+    </select>
+    <br><br>
+    <label for="topic">Enter a topic or feeling:</label>
+    <input type="text" name="topic" required>
+    <br><br>
+    <input type="submit" value="Generate">
+  </form>
+
+  {% if lyric %}
+    <h2>🎤 Lyric:</h2>
+    <p>{{ lyric }}</p>
+  {% endif %}
+
+  {% if audio_path %}
+    <h2>🎧 Generated Beat:</h2>
+    <audio controls>
+      <source src="{{ audio_path }}" type="audio/wav">
+      Your browser does not support the audio element.
+    </audio>
+  {% endif %}
+
+  {% if error %}
+    <p style="color:red;">{{ error }}</p>
+  {% endif %}
+</body>
+</html>
