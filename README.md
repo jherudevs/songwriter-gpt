@@ -3,7 +3,11 @@
 An AI-powered music assistant that transforms your vibe and topic into a beat + lyric line.
 
 
-## Loom Demo
+## Songwriter-GPT
+🎥 [Watch the video demo](https://youtu.be/RYrgQba5USo)
+
+## Connect 
+💼 [LinkedIn](https://www.linkedin.com/in/jherualba/)
 
 
 ## 🚀 Features
