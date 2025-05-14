@@ -2,6 +2,9 @@ import os
 import random
 from openai import OpenAI
 from songwriter_ai.utilities.prompting.text_utils import normalize_text
+from dotenv import load_dotenv
+
+load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
